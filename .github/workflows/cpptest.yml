@@ -1,0 +1,38 @@
+name: C++ Build
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  release:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install C++ 23
+        run: sudo apt install -y g++-11
+      - name: Check for C++ files
+        id: check_cpp_files
+        run: |
+          if [ -z "$(find . -name '*.cpp')" ]; then
+            echo "No C++ files found"
+            echo "::set-output name=cpp_files::false"
+          else
+            echo "::set-output name=cpp_files::true"
+          fi
+      - name: Compile C++ code
+        if: steps.check_cpp_files.outputs.cpp_files == 'true'
+        run: g++-11 -std=c++23 -Wall -Wextra -Werror -pedantic -c *.cpp
+      - name: Upload build artifact
+        if: steps.check_cpp_files.outputs.cpp_files == 'true' && success()
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifact
+          path: .
